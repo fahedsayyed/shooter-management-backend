@@ -1,0 +1,517 @@
+import React, { useState } from "react";
+import { Box, Stepper, Step, StepLabel, Button } from "@mui/material";
+import PageContainer from "src/components/page-container/PageContainer";
+import BlankCard from "src/components/shared/BlankCard";
+import TableHead from "src/components/table-head";
+import AddCompetitionSlide2 from "./AddCompetitionSlide2";
+import BackLink from "src/components/back-link";
+import APP_ROUTES from "src/routes/routePaths";
+import AddCompetitionSlide1 from "./AddCompetitionSlide1";
+import { useSelector, AppState } from "../../../store/Store";
+import { generateErrorInitialState } from "src/utils/FormValidate";
+import { useDispatch } from "react-redux";
+import { setCheckError } from "src/store/championship-reducer/addCompetitionFormSlice";
+import { notifyMessage } from "src/utils/toastNotify";
+import { useParams } from "react-router";
+import axiosServices from "src/utils/axios";
+
+const steps = ["Competition Form", "Events"];
+
+const AddCompetition = () => {
+  const dispatch = useDispatch();
+  const [log, setLog] = useState(0);
+  const [activeStep, setActiveStep] = React.useState(0);
+  const [skipped, setSkipped] = React.useState(new Set());
+  const { id } = useParams();
+
+  const competitionData = useSelector((state: AppState) => state.AddCompetitionForm.competitionData);
+  //const editid = useSelector((state: AppState) => state.AddCompetitionForm.id);
+  const checkState = useSelector((state: AppState) => state.AddCompetitionForm.steps.step1);
+  const errorInitialState = generateErrorInitialState(competitionData);
+  const [error] = React.useState(errorInitialState);
+  const isStepSkipped = (step: number): boolean => skipped.has(step);
+
+  // const handleNext = (e: React.MouseEvent<HTMLButtonElement>): void => {
+  //   e.preventDefault();
+  //   console.log(checkState, "step state");
+  //   //console.log(editid, "for edit");
+  //   const check = Object.values(competitionData).every((value) => value !== "");
+  //   !check ? notifyMessage.error("Check all the required fields") : notifyMessage.success("Draft Saved");
+  //   setLog((prevActiveStep) => prevActiveStep + 1);
+
+  //   if (!check) {
+  //     dispatch(setCheckError(true));
+  //     console.log(error, "add compi");
+  //   } else {
+  //     setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  //     dispatch(setCheckError(false));
+
+  //     console.log("send data");
+  //   }
+
+  //   let newSkipped = skipped;
+  //   if (isStepSkipped(activeStep)) {
+  //     newSkipped = new Set(newSkipped.values());
+  //     newSkipped.delete(activeStep);
+  //   }
+
+  //   setSkipped(newSkipped);
+  // };
+
+  // const handleNext = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
+  //   e.preventDefault();
+  //   console.log(checkState, "step state");
+  //   const check = Object.values(competitionData).every((value) => value !== "");
+  //   !check ? notifyMessage.error("Check all the required fields") : notifyMessage.success("Draft Saved");
+  //   setLog((prevActiveStep) => prevActiveStep + 1);
+
+  //   if (check) {
+  //     notifyMessage.error("Check all the required fields");
+  //     dispatch(setCheckError(true));
+  //     console.log(error, "add compi");
+  //   } else {
+  //     //setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  //     dispatch(setCheckError(false));
+
+  //     try {
+  //       let response;
+  //       if (id) {
+  //         response = await axiosServices.put(`/api/tenants/championship/competition/${id}`, competitionData);
+  //       } else {
+  //         response = await axiosServices.post("/api/tenants/championship/create_compitition", competitionData);
+  //         console.log(response);
+  //       }
+
+  //       if (response.status === 200 || response.status === 201) {
+  //         console.log("Competition saved successfully");
+  //         notifyMessage.success("Competition saved successfully");
+  //       } else {
+  //         console.error("Unexpected response:", response);
+  //         notifyMessage.error("Failed to save competition");
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to save competition", error);
+  //       notifyMessage.error("Failed to save competition");
+  //     }
+
+  //     setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  //     //setLog((prevActiveStep) => prevActiveStep + 1);
+  //   }
+
+  //   let newSkipped = skipped;
+  //   if (isStepSkipped(activeStep)) {
+  //     newSkipped = new Set(newSkipped.values());
+  //     newSkipped.delete(activeStep);
+  //   }
+
+  //   setSkipped(newSkipped);
+  // };
+
+  const handleNext = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
+    e.preventDefault();
+    console.log(checkState, "step state");
+    const check = Object.values(competitionData).every((value) => value !== "");
+    setLog((prevActiveStep) => prevActiveStep + 1);
+
+    if (!check) {
+      notifyMessage.error("Check all the required fields");
+      dispatch(setCheckError(true));
+      console.log(error, "add compi");
+    } else {
+      // Move these lines here
+      notifyMessage.success("Draft Saved");
+      dispatch(setCheckError(false));
+
+      try {
+        let response;
+        if (id) {
+          response = await axiosServices.put(`/api/tenants/championship/competition/${id}`, competitionData);
+        } else {
+          response = await axiosServices.post("/api/tenants/championship/create_compitition", competitionData);
+          console.log(response);
+        }
+
+        if (response.status === 200 || response.status === 201) {
+          console.log("Competition saved successfully");
+          notifyMessage.success("Competition saved successfully");
+        } else {
+          console.error("Unexpected response:", response);
+          notifyMessage.error("Failed to save competition");
+        }
+      } catch (error) {
+        console.error("Failed to save competition", error);
+        notifyMessage.error("Failed to save competition");
+      }
+
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    }
+
+    let newSkipped = skipped;
+    if (isStepSkipped(activeStep)) {
+      newSkipped = new Set(newSkipped.values());
+      newSkipped.delete(activeStep);
+    }
+
+    setSkipped(newSkipped);
+  };
+
+  const handleBack = (): void => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setLog((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  const handleSteps = (step: any) => {
+    switch (step) {
+      case 0:
+        return <AddCompetitionSlide1 step={log} />;
+      case 1:
+        return <AddCompetitionSlide2 />;
+      default:
+        return <></>;
+    }
+  };
+
+  return (
+    <>
+      <BackLink title="Back to the championship" route={`${APP_ROUTES.CHAMPIONS}`} />
+      {/* <TableHead title="Add Competition" /> */}
+      <TableHead title={id ? "Edit Competition" : "Add Competition"} />
+      <PageContainer>
+        <BlankCard>
+          <Box width="100%" padding={3}>
+            <Stepper activeStep={activeStep}>
+              {steps.map((label, index) => {
+                const stepProps: { completed?: boolean } = {};
+                const labelProps: {
+                  optional?: React.ReactNode;
+                } = {};
+                if (isStepSkipped(index)) {
+                  stepProps.completed = false;
+                }
+
+                return (
+                  <Step key={label} {...stepProps}>
+                    <StepLabel {...labelProps}>{label}</StepLabel>
+                  </Step>
+                );
+              })}
+            </Stepper>
+            {activeStep === steps.length ? null : (
+              <>
+                <Box>{handleSteps(activeStep)}</Box>
+                <Box display="flex" flexDirection="row" mt={3}>
+                  <Button color="inherit" variant="contained" disabled={activeStep === 0} onClick={handleBack} sx={{ mr: 1 }}>
+                    Back
+                  </Button>
+                  <Box flex="1 1 auto" />
+                  <Button onClick={handleNext} variant="contained" color={activeStep === steps.length - 1 ? "success" : "secondary"}>
+                    {activeStep === steps.length - 1 ? "Finish" : "Next"}
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Box>
+        </BlankCard>
+      </PageContainer>
+    </>
+  );
+};
+
+export default AddCompetition;
+
+
+
+ const getCategoryById = async (id: number) => {
+    try {
+     
+
+      const response = await axiosServices.get(`/api/tenants/championship/competition-categories/${id}`);
+      if (response.status === 200) {
+
+       const categoryData = response.data;
+        setDetail({
+          category_name: categoryData.category_name,
+        });
+      } else {
+ 
+        console.error("Failed to fetch category:", response);
+      }
+    } catch (error) {
+
+      console.error("Failed to fetch category:", error);
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+ const handleApiResponse = (response, successMessage, failureMessage) => {
+    if (response.status === 200) {
+      notifyMessage.success(successMessage);
+      // You can update your state or perform other necessary actions here
+    } else {
+      console.error(`Failed: ${failureMessage}`, response);
+      notifyMessage.error(failureMessage);
+    }
+  };
+
+  const handleDeleteCompetition = async (competitionId) => {
+    try {
+      const response = await axiosServices.delete(`/api/tenants/championship/competitions/${competitionId}`);
+      handleApiResponse(response, "Competition deleted successfully", "Failed to delete competition");
+    } catch (error) {
+      console.error("Failed to delete competition:", error);
+      notifyMessage.error("Failed to delete competition");
+    }
+  };
+
+
+  const handleConfirmActions = async () => {
+    try {
+      if (selectedId) {
+        if (isDeletingCategory) {
+          await handleDeleteCategory(selectedId);
+        } else {
+          await handleDeleteCompetition(selectedId);
+        }
+      }
+    } finally {
+      handleCloseAlert();
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useEffect, useState } from "react";
+import { Grid, FormControl, Button, FormGroup, Paper } from "@mui/material";
+import CustomTextField from "src/utils/theme-elements/CustomTextField";
+import CustomFormLabel from "src/utils/theme-elements/CustomFormLabel";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import { RequiredStar } from "./required-star";
+import validateForm, { generateErrorInitialState } from "src/utils/FormValidate";
+
+interface FireArm {
+  post: string;
+  Name: string;
+}
+interface FormData {
+  shooterId: string;
+  fireArms: FireArm[];
+}
+interface ChampionshipGenerativeProps {
+  step: number;
+}
+const ChampionshipGenerative: React.FC<ChampionshipGenerativeProps> = ({ step }) => {
+  const [formData, setFormData] = useState<FormData>(() => {
+    const storedState = localStorage.getItem("");
+
+    return storedState
+      ? JSON.parse(storedState)
+      : {
+          shooterId: "",
+          fireArms: [{ post: "", Name: "" }],
+        };
+  });
+  const errorInitialState: any = generateErrorInitialState(formData.fireArms);
+  const [error, setError] = useState(errorInitialState);
+  const createFieldHandlers = (index: number, fieldName: keyof FireArm) => ({
+    onBlur: () => checkError(index, fieldName),
+  });
+  const checkError = (index: number, fieldName: keyof FireArm) => {
+    const newErrors: any = validateForm({ [fieldName]: formData.fireArms[index][fieldName] });
+    setError((prevErrors: any) => {
+      const updatedErrors = { ...prevErrors };
+      if (!updatedErrors.fireArms) {
+        updatedErrors.fireArms = Array.from({ length: formData.fireArms.length }, () => ({}));
+      }
+      updatedErrors.fireArms[index] = { ...updatedErrors.fireArms[index], [fieldName]: newErrors[fieldName] };
+
+      return updatedErrors;
+    });
+  };
+  const wholeError = () => {
+    if (step > 0) {
+      const newErrors = formData.fireArms.map((field) => validateForm(field));
+      setError((prevErrors: any) => {
+        const updatedErrors = { ...prevErrors };
+        if (!updatedErrors.fireArms) {
+          updatedErrors.fireArms = Array.from({ length: formData.fireArms.length }, () => ({}));
+        }
+        formData.fireArms.forEach((field: any, index) => {
+          console.log(field, "field");
+          updatedErrors.fireArms[index] = { ...updatedErrors.fireArms[index], ...newErrors[index] };
+        });
+
+        return updatedErrors;
+      });
+    } else {
+      setError(generateErrorInitialState(formData.fireArms));
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem("", JSON.stringify(formData));
+    wholeError();
+  }, [formData, step]);
+  const handleAddFields = () => {
+    setFormData((prev) => ({
+      ...prev,
+      fireArms: [...prev.fireArms, { post: "", Name: "" }],
+    }));
+  };
+  const handleRemoveFields = () => {
+    if (formData.fireArms.length > 1) {
+      setFormData((prev) => ({
+        ...prev,
+        fireArms: prev.fireArms.slice(0, -1),
+      }));
+    }
+  };
+  const fireArmsChange = (index: number, fieldName: keyof FireArm, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      fireArms: prev.fireArms.map((arms, i) => (i === index ? { ...arms, [fieldName]: value } : arms)),
+    }));
+  };
+
+  return (
+    <Grid item xs={12} lg={12}>
+      <FormGroup sx={{ position: "relative" }}>
+        <Paper sx={{ background: "none", boxShadow: "none" }}>
+          <Grid container justifyContent="flex-end">
+            <Grid>
+              <div style={{ display: "flex", alignItems: "center", position: "absolute", right: 0 }}>
+                <Button variant="outlined" sx={{ width: "20px", textAlign: "center", marginRight: 0.5 }} onClick={handleAddFields}>
+                  <AddIcon />
+                </Button>
+                {formData.fireArms.length > 1 && (
+                  <Button variant="outlined" sx={{ width: "20px", textAlign: "center", marginRight: 0.5 }} onClick={handleRemoveFields}>
+                    <RemoveIcon />
+                  </Button>
+                )}
+              </div>
+            </Grid>
+          </Grid>
+          {formData.fireArms.map((arms, i) => (
+            <Grid container spacing={2} key={i}>
+              <Grid item xs={12} lg={6}>
+                <CustomFormLabel htmlFor={`post-${i}`}>
+                  Post
+                  <RequiredStar />
+                </CustomFormLabel>
+                <FormControl fullWidth>
+                  <CustomTextField
+                    id={`post-${i}`}
+                    label="Post"
+                    name="post"
+                    value={arms.post}
+                    error={!!error.fireArms && !!error.fireArms[i]?.post}
+                    helperText={error.fireArms && error.fireArms[i]?.post}
+                    {...createFieldHandlers(i, "post")}
+                    onChange={(e: any) => fireArmsChange(i, "post", e.target.value)}
+                    fullWidth
+                  />
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} lg={6}>
+                <CustomFormLabel htmlFor={`Name-${i}`}>
+                  Name
+                  <RequiredStar />
+                </CustomFormLabel>
+                <FormControl fullWidth>
+                  <CustomTextField
+                    id={`Name-${i}`}
+                    label="Name"
+                    name="Name"
+                    value={arms.Name}
+                    error={!!error.fireArms && !!error.fireArms[i]?.Name}
+                    helperText={error.fireArms && error.fireArms[i]?.Name}
+                    {...createFieldHandlers(i, "Name")}
+                    onChange={(e: any) => fireArmsChange(i, "Name", e.target.value)}
+                    fullWidth
+                  />
+                </FormControl>
+              </Grid>
+            </Grid>
+          ))}
+        </Paper>
+      </FormGroup>
+    </Grid>
+  );
+};
+export default ChampionshipGenerative;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

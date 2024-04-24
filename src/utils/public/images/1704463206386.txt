@@ -1,0 +1,17 @@
+ const athleteChecks: any = useSelector((state: AppState) => state.athleteRegister);
+
+ //--check errors to disable submit button ---
+  const areAllFieldsFilled = (slide: any) => Object.values(slide).every((value) => value !== "");
+
+const isSlideOneFieldsFilled = areAllFieldsFilled(athleteChecks.slideOne);
+ setDisabled(!isSlideOneFieldsFilled);
+
+
+this is validation 's some logic for checking all field should be field 
+and this is how data is dispatch
+
+  const updateFormData = useCallback(() => {
+    dispatch(setSlideOneFormData(formData));
+  }, [ combinedSlideone]);
+
+now i want to use these validation similarly for my addCompetition  ,s filed as already i have applied valiadation and setup of reducer for its field now before submitting i want it should check the manadatory fields are field

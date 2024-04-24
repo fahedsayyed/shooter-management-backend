@@ -1,0 +1,63 @@
+redis-cli
+"ERR unknown command 'redis-cli'"
+set name Deep
+"OK"
+get name
+"Deep"
+getrange 0 2
+"ERR wrong number of arguments for 'getrange' command"
+getrange name 0 2
+"Dee"
+mset lang eng tech java name pk
+"OK"
+mget lang name
+1) "eng"
+2) "pk"
+strlen lang
+3
+get name
+"pk"
+set name deep
+"OK"
+get name
+"deep"
+set count 1
+"OK"
+get count
+"1"
+incr count
+2
+incrby count 10
+12
+set pi 3.14
+"OK"
+get pi
+"3.14"
+incr pi
+"ERR value is not an integer or out of range"
+incrfloat pi
+"ERR unknown command 'incrfloat'"
+incrbyfloat pi 1
+"4.140000000000001"
+set a 7
+"OK"
+expire a 10
+1
+ttl a
+2
+ttl a
+-2
+ttl a
+-2
+get a
+null
+setex b 10 dk
+"OK"
+ttl b
+5
+ttl b
+1
+ttl b
+-2
+get b
+null
